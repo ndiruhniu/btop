@@ -38,14 +38,33 @@ concurrency:
 jobs:
   gpu_build_linux:
     runs-on: ubuntu-24.04
-    container: alpine:edge
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
         with:
           persist-credentials: false
 
       - name: Install build tools
-        run: apk add --no-cache --update gcc g++ make linux-headers
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential g++-14 git coreutils sed lowdown libdrm-dev
+
+      - name: Fetch ROCm SMI
+        run: |
+          mkdir -p lib
+          git clone https://github.com/rocm/rocm_smi_lib.git --depth 1 -b release/rocm-rel-7.2 lib/rocm_smi_lib
 
       - name: Compile
-        run: make CXX=g++ GPU_SUPPORT=true
+        run: make CXX=g++-14 GPU_SUPPORT=true RSMI_STATIC=true STRIP=true
+
+      - name: Create artifact
+        run: |
+          mkdir -p artifacts
+          cp bin/btop artifacts/btop-gpu-x86_64
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: btop-gpu-linux
+          path: artifacts/*
+          retention-days: 7
+
