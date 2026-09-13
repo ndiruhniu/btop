@@ -8,5 +8,6 @@
 #include <vector>
 
 auto main(int argc, const char* argv[]) -> int {
+	setenv("LC_ALL", "C.UTF-8", 1);
 	return btop_main(std::views::counted(std::next(argv), argc - 1) | std::ranges::to<std::vector<std::string_view>>());
 }
